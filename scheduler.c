@@ -358,22 +358,4 @@ int main(){
     } while (choice != 5);
 
     return 0;
-
-    // int n;
-    // int tq;
-    // printf("Enter number of processes: ");
-    // scanf("%d", &n);
-    //
-    // // Input process details
-    // struct Process processes[n];
-    // for (int i = 0; i < n; i++){
-    //     processes[i].id = i + 1;
-    //     printf("Enter Arrival Time and Burst Time for P%d: ", i + 1);
-    //     scanf("%d %d", &processes[i].at, &processes[i].bt);
-    // }
-    //
-    // // Execute both scheduling algorithms
-    // sjfNonPreemptive(processes, n);
-    // fcfs(processes, n);
-    // return 0;
 }
