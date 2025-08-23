@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <limits.h>
+#include <stdbool.h>
+
 
 /* Process Structure
  * Represents a process with all necessary attributes for scheduling
@@ -117,7 +119,7 @@ void fcfs(struct Process p[], int n) {
 
     int currentTime = 0;       // Current time in simulation
     float totalWT = 0;         // Sum of waiting times
-    float totalTAT = 0;        // Sum of turnaround times
+    float totalTAT = 0;        // Sum of all turnaround times
 
     printf("\n--- FCFS ---\n");
     printf("Gantt Chart:\n");
@@ -224,24 +226,154 @@ void sjfPreemptive(struct Process p[], int n){
     printResults(p, n, totalWT, totalTAT);
 }
 
-/* Main function
+/* Round Robin Scheduling Algorithm
+ * Executes processes in a circular order with a fixed time quantum
+ * Parameters:
+ * p[] - array of processes
+ * n - total number of processes
+ * tq- time quantum
+ */
+
+
+/* Round Robin Scheduling Algorithm
+ * Executes processes in a circular order with a fixed time quantum
+ * Parameters:
+ * p[] - array of processes
+ * n - total number of processes
+ * tq - time quantum
+ */
+void roundRobin(struct Process p[], int n, int tq) {
+    int completed = 0;
+    int currentTime = 0;
+    float totalWT = 0, totalTAT = 0;
+
+    int remainingBT[n];
+    for (int i = 0; i < n; i++) {
+        remainingBT[i] = p[i].bt;
+        p[i].done = 0;
+    }
+
+    printf("\n--- Round Robin (Time Quantum = %d) ---\n", tq);
+    printf("Gantt Chart:\n");
+
+    // Continue until all processes are completed
+    while (completed < n) {
+        bool foundProcess = false;
+
+        // Check each process in round robin fashion
+        for (int i = 0; i < n; i++) {
+            // Process only if it has arrived and has remaining burst time
+            if (remainingBT[i] > 0 && p[i].at <= currentTime) {
+                foundProcess = true;
+
+                if (remainingBT[i] > tq) {
+                    // Process for time quantum
+                    printf("| P%d (%d) ", p[i].id, currentTime + tq);
+                    currentTime += tq;
+                    remainingBT[i] -= tq;
+                } else {
+                    // Process for remaining time
+                    printf("| P%d (%d) ", p[i].id, currentTime + remainingBT[i]);
+                    currentTime += remainingBT[i];
+                    remainingBT[i] = 0;
+                    p[i].ct = currentTime;
+                    p[i].tat = p[i].ct - p[i].at;
+                    p[i].wt = p[i].tat - p[i].bt;
+                    completed++;
+
+                    totalWT += p[i].wt;
+                    totalTAT += p[i].tat;
+                }
+            }
+        }
+
+        // If no process could be executed, increment time
+        if (!foundProcess) {
+            printf("| IDLE (%d) ", currentTime + 1);
+            currentTime++;
+        }
+    }
+
+    printf("|\n");
+    printResults(p, n, totalWT, totalTAT);
+}
+
+
+/* Main Function
  * Handles user input and calls scheduling algorithms
  */
+
 int main(){
-    int n;
+    int n, choice, tq;
+
     printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    // Input process details
     struct Process processes[n];
-    for (int i = 0; i < n; i++){
+
+    for(int i = 0; i < n; i++){
         processes[i].id = i + 1;
-        printf("Enter Arrival Time and Burst Time for P%d: ", i + 1);
+        printf("Enter arrival time and burst time for P%d: ", i + 1);
         scanf("%d %d", &processes[i].at, &processes[i].bt);
     }
 
-    // Execute both scheduling algorithms
-    sjfNonPreemptive(processes, n);
-    fcfs(processes, n);
+    do {
+        printf("\n===== CPU Scheduling Menu =====\n");
+        printf("1. First Come First Serve (FCFS)\n");
+        printf("2. Shortest Job First (Non-Preemptive)\n");
+        printf("3. Shortest Job First (Preemptive / SRTF)\n");
+        printf("4. Round Robin\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        // Make a fresh copy of processes each time
+        // (so earlier algorithms don’t affect later runs)
+        struct Process temp[n];
+        for (int i = 0; i < n; i++) {
+            temp[i] = processes[i];
+        }
+
+        switch (choice) {
+            case 1:
+                fcfs(temp, n);
+                break;
+            case 2:
+                sjfNonPreemptive(temp, n);
+                break;
+            case 3:
+                sjfPreemptive(temp, n);
+                break;
+            case 4:
+                printf("Enter Time Quantum: ");
+                scanf("%d", &tq);
+                roundRobin(temp, n, tq);
+                break;
+            case 5:
+                printf("Exiting program...\n");
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
+        }
+    } while (choice != 5);
+
     return 0;
+
+    // int n;
+    // int tq;
+    // printf("Enter number of processes: ");
+    // scanf("%d", &n);
+    //
+    // // Input process details
+    // struct Process processes[n];
+    // for (int i = 0; i < n; i++){
+    //     processes[i].id = i + 1;
+    //     printf("Enter Arrival Time and Burst Time for P%d: ", i + 1);
+    //     scanf("%d %d", &processes[i].at, &processes[i].bt);
+    // }
+    //
+    // // Execute both scheduling algorithms
+    // sjfNonPreemptive(processes, n);
+    // fcfs(processes, n);
+    // return 0;
 }
